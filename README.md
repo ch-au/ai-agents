@@ -183,6 +183,10 @@ The framework is designed to be easily extended without modifying the core engin
 
 > For detailed instructions, please see the [**Guides**](./docs/guides/) directory.
 
+For cloud deployment planning details (runtime mode, endpoint contracts, and LLM structured-output hardening), see [**Cloud Mode Implementation Spec (v1)**](./docs/guides/07-cloud-mode-spec.md).
+
+Before implementing feature-complete behavior, ensure the original requirements are committed and versioned per [**Requirements Source of Truth**](./docs/guides/00-requirements-source-of-truth.md).
+
 ## 🏛️ Architecture Overview
 
 The system uses a well-defined collaborative flow to tackle complex tasks, with its core interactions illustrated below:

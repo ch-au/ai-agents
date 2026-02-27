@@ -7,8 +7,7 @@ interface Metadata {
 
 interface SessionResponse {
   session_id: string;
-  run_id: string;
-  ws_url: string;
+  ws_url?: string;
 }
 
 export class ProjectService {

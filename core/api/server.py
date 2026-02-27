@@ -30,18 +30,27 @@ logger = logging.getLogger(__name__)
 # Create FastAPI application
 app = FastAPI(title="PocketFlow Search Agent API", lifespan=lifespan_manager)
 
+def _get_cors_allow_origins() -> List[str]:
+    """Returns CORS allow-origins from env, with local-dev defaults."""
+    configured_origins = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
+    if configured_origins:
+        return [origin.strip() for origin in configured_origins.split(",") if origin.strip()]
+
+    return [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ]
+
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:8000",  # Add FastAPI port
-        "http://127.0.0.1:8000"
-    ],  # Allow frontend development environment and FastAPI access
+    allow_origins=_get_cors_allow_origins(),
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all HTTP methods
-    allow_headers=["*"],  # Allow all request headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Frontend file configuration
@@ -241,7 +250,15 @@ async def create_new_session(http_request: Request): # Removed session_request_d
     The request body should be empty.
     """
     try:
-        result = await create_session() 
+        result = await create_session()
+        forwarded_proto = http_request.headers.get("x-forwarded-proto")
+        forwarded_host = http_request.headers.get("x-forwarded-host")
+
+        scheme = (forwarded_proto.split(",")[0].strip() if forwarded_proto else http_request.url.scheme)
+        host = (forwarded_host.split(",")[0].strip() if forwarded_host else http_request.headers.get("host", "localhost:8000"))
+        ws_scheme = "wss" if scheme == "https" else "ws"
+        result["ws_url"] = f"{ws_scheme}://{host}"
+
         return result
     except Exception as e:
         logger.error("session_credential_creation_failed", extra={"error": str(e)}, exc_info=True)
@@ -406,5 +423,4 @@ async def get_metadata(url: str = Query(..., description="The URL for which to f
     except Exception as e:
         logger.error("metadata_fetch_failed", extra={"url": url, "error": str(e)})
         raise HTTPException(status_code=500, detail="Failed to fetch metadata")
-
 

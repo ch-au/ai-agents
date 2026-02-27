@@ -471,6 +471,7 @@ export interface DispatchHistoryEntry {
 
 class SessionStore {
   sessionId: string | null = null;
+  wsBaseUrl: string | null = null;
   ws: WebSocket | null = null;
   isConnected: boolean = false;
   isConnecting: boolean = false;
@@ -653,7 +654,7 @@ class SessionStore {
             this.sessionId = data.session_id;
         });
 
-        await this.connectWebSocket(data.session_id);
+        await this.connectWebSocket(data.session_id, data.ws_url);
 
         runInAction(() => {
             this.isConnected = true;
@@ -677,9 +678,11 @@ class SessionStore {
     }
   }
 
-  async connectWebSocket(sessionId: string) {
+  async connectWebSocket(sessionId: string, wsUrl?: string) {
     return new Promise((resolve, reject) => {
-      const ws = new WebSocket(`${config.ws.url}${config.ws.endpoint}/${sessionId}`);
+      const baseWsUrl = wsUrl || this.wsBaseUrl || config.ws.url;
+      this.wsBaseUrl = baseWsUrl;
+      const ws = new WebSocket(`${baseWsUrl}${config.ws.endpoint}/${sessionId}`);
       
       ws.onopen = () => {
         this.ws = ws;
